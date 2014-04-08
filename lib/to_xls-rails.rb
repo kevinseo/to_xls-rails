@@ -11,6 +11,9 @@ class Array
     # @items = [{:name => "woo", :first => "seo"}, {:addr => "aaa", :addr2 => "bbb"}]
     # @items.hash_array_to_xls
     #
+    # if you want save all array into a sheet, you can use :one_sheet => true option like following
+    # @items.hash_array_to_xls(:one_sheet => true)
+
     def hash_array_to_xls(options = {}, &block) 
         return '' if self.empty? && options[:prepend].blank?
 
@@ -23,16 +26,26 @@ class Array
 
         book = Spreadsheet::Workbook.new
 
+        sheet_created = false
+        @sheet = nil
+        @sheet_index = 0
         self.each do |item|
-            sheet = book.create_worksheet
-            sheet_index = 0
-
-            if options[:column_width]
-                options[:column_width].each_index {|index| sheet.column(index).width = options[:column_width][index]}
+            if options[:one_sheet] == nil or options[:one_sheet] != true or sheet_created == false
+                @sheet = book.create_worksheet
+                @sheet_index = 0
+                if options[:column_width]
+                    options[:column_width].each_index {|index| sheet.column(index).width = options[:column_width][index]}
+                end
+            else
+                @sheet.update_row @sheet_index, ' '
+                @sheet_index += 1
             end
 
+            sheet_created = true
+                
             item.each_with_index do |(key,value), index|
-                sheet.update_row index, key.to_s, value.to_s
+                @sheet.update_row @sheet_index, key.to_s, value.to_s
+                @sheet_index += 1
             end
         end
 
